@@ -11,10 +11,12 @@ from ReplayBuffer import ReplayBuffer
 
 OU = OU()  # Ornstein-Uhlenbeck Process
 
+RUN = 3
+SETTING = "doubleSizeNetw"
 
 def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 means simply Run
     if train_indicator == 1:
-        log = open("./rewards.log", 'w')
+        log = open("rewards/rewards-{}-{}.log".format(SETTING, RUN), 'w')
 
     BUFFER_SIZE = 10000
     BATCH_SIZE = 32
@@ -47,10 +49,10 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
 
     if train_indicator == 0:
         try:
-            actor.model.load_weights("actormodel.h5")
-            critic.model.load_weights("criticmodel.h5")
-            actor.target_model.load_weights("actormodel.h5")
-            critic.target_model.load_weights("criticmodel.h5")
+            actor.model.load_weights("models/actormodel.h5")
+            critic.model.load_weights("models/criticmodel.h5")
+            actor.target_model.load_weights("models/actormodel.h5")
+            critic.target_model.load_weights("models/criticmodel.h5")
             print("Weight load successfully")
         except:
             print("Cannot find the weight")
@@ -122,12 +124,12 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
         if np.mod(i, 3) == 0:
             if (train_indicator):
                 print("Now we save model")
-                actor.model.save_weights("actormodel.h5", overwrite=True)
-                with open("actormodel.json", "w") as outfile:
+                actor.model.save_weights("models/actormodel.h5", overwrite=True)
+                with open("models/actormodel.json", "w") as outfile:
                     json.dump(actor.model.to_json(), outfile)
 
-                critic.model.save_weights("criticmodel.h5", overwrite=True)
-                with open("criticmodel.json", "w") as outfile:
+                critic.model.save_weights("models/criticmodel.h5", overwrite=True)
+                with open("models/criticmodel.json", "w") as outfile:
                     json.dump(critic.model.to_json(), outfile)
 
         print("TOTAL REWARD @ " + str(i) + "-th Episode  : Reward " + str(total_reward))

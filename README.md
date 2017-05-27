@@ -1,28 +1,17 @@
-## Using Keras and Deep Deterministic Policy Gradient to play TORCS
 
-300 lines of python code to demonstrate DDPG with Keras
+vanilla settings
+- OU .6, .3
+- NN 100, 200
+- convergence at around 100
 
-Please read the following blog for details
+double network size
+- OU .6, .3
+- NN 200, 400
+- convergence at around 100 (same as vanilla)
 
-https://yanpanlau.github.io/2016/10/11/Torcs-Keras.html
 
-![](fast.gif)
 
-# Installation Dependencies:
 
-* Python 2.7
-* Keras 1.1.0
-* Tensorflow r0.10
-* [gym_torcs](https://github.com/ugo-nama-kun/gym_torcs)
 
-# How to Run?
 
-```
-git clone https://github.com/yanpanlau/DDPG-Keras-Torcs.git
-cd DDPG-Keras-Torcs
-cp *.* ~/gym_torcs
-cd ~/gym_torcs
-python ddpg.py 
-```
 
-(Change the flag **train_indicator**=1 in ddpg.py if you want to train the network)
