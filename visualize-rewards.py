@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-RUN = 3
-SETTING = "doubleSizeNetw"
+RUN = 1
+SETTING = "biggerOuNoise"
 
 rewards = np.loadtxt("rewards/rewards-{}-{}.log".format(SETTING, RUN), dtype=np.float32)
 x = np.arange(len(rewards))

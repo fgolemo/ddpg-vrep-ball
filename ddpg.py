@@ -12,7 +12,7 @@ from ReplayBuffer import ReplayBuffer
 OU = OU()  # Ornstein-Uhlenbeck Process
 
 RUN = 3
-SETTING = "doubleSizeNetw"
+SETTING = "biggerOuNoise"
 
 def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 means simply Run
     if train_indicator == 1:
@@ -74,7 +74,7 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
             noise_t = np.zeros([1, action_dim])
 
             a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0]))
-            noise_t[0][0] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][0], 0.0, 0.60, 0.30)
+            noise_t[0][0] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][0], 0.0, 2.0, 1.0)
 
             a_t[0][0] = a_t_original[0][0] + noise_t[0][0]
 
