@@ -43,8 +43,24 @@ class ActorNetwork(object):
         S = Input(shape=[state_size])
         h0 = Dense(HIDDEN1_UNITS, activation='relu')(S)
         h1 = Dense(HIDDEN2_UNITS, activation='relu')(h0)
-        Steering = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
-        Steering = Lambda(lambda x: x * 2)(Steering)  # scaling up to -2,2
-        # V = merge([Steering], mode='concat')
-        model = Model(input=S, output=Steering)
+        m1 = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
+        m1 = Lambda(lambda x: x * 150)(m1)  # scaling up to -2,2
+
+        m2 = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
+        m2 = Lambda(lambda x: x * 90)(m2)
+
+        m3 = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
+        m3 = Lambda(lambda x: x * 90)(m3)
+
+        m4 = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
+        m4 = Lambda(lambda x: x * 90)(m4)
+
+        m5 = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
+        m5 = Lambda(lambda x: x * 90)(m5)
+
+        m6 = Dense(1, activation='tanh', kernel_initializer='random_normal')(h1)
+        m6 = Lambda(lambda x: x * 90)(m6)
+
+        V = merge([m1, m2, m3, m4, m5, m6], mode='concat')
+        model = Model(input=S, output=V)
         return model, model.trainable_weights, S

@@ -2,6 +2,7 @@ import json
 import numpy as np
 
 import gym
+import gym_vrep # must not delete this import
 import tensorflow as tf
 
 from ActorNetwork import ActorNetwork
@@ -11,8 +12,9 @@ from ReplayBuffer import ReplayBuffer
 
 OU = OU()  # Ornstein-Uhlenbeck Process
 
-RUN = 3
-SETTING = "biggerOuNoise"
+RUN = 2
+SETTING = "vanilla"
+
 
 def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 means simply Run
     if train_indicator == 1:
@@ -25,14 +27,14 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
     LRA = 0.0001  # Learning rate for Actor
     LRC = 0.001  # Lerning rate for Critic
 
-    action_dim = 1  # Steering/Acceleration/Brake
-    state_dim = 3  # of sensors input
+    action_dim = 6  # 6 motors
+    state_dim = 6  # of sensors input
 
-    np.random.seed(1337)
+    # np.random.seed(1337)
 
     EXPLORE = 10000.
-    episode_count = 200
-    max_steps = 1000
+    episode_count = 5000
+    max_steps = 10
     step = 0
     epsilon = 1
 
@@ -45,7 +47,9 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
     critic = CriticNetwork(sess, state_dim, action_dim, BATCH_SIZE, TAU, LRC)
     buff = ReplayBuffer(BUFFER_SIZE)  # Create replay buffer
 
-    env = gym.make('Pendulum-v0')
+    env = gym.make('ErgoBall-v0')
+
+    env.env._actualInit(headless=True)
 
     if train_indicator == 0:
         try:
@@ -74,13 +78,17 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
             noise_t = np.zeros([1, action_dim])
 
             a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0]))
-            noise_t[0][0] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][0], 0.0, 2.0, 1.0)
 
-            a_t[0][0] = a_t_original[0][0] + noise_t[0][0]
+            for i in range(6):
+                noise_t[0][i] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][i], 0.0, 2.0, 1.0)
+                a_t[0][i] = a_t_original[0][i] + noise_t[0][i]
 
             if render:
                 env.render()
-            ob, r_t, done, info = env.step(a_t[0])
+
+            actions = tuple(np.array([action]) for action in a_t[0].tolist())
+
+            ob, r_t, done, info = env.step(actions)
 
             s_t1 = ob
 
@@ -146,4 +154,4 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
 
 
 if __name__ == "__main__":
-    playGame(train_indicator=1, render=True, debug=False)
+    playGame(train_indicator=1, render=False, debug=True)
