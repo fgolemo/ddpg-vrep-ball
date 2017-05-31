@@ -15,6 +15,7 @@ OU = OU()  # Ornstein-Uhlenbeck Process
 RUN = 2
 SETTING = "vanilla"
 
+TOP_EPISODE_BUFFER = 50
 
 def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 means simply Run
     if train_indicator == 1:
@@ -37,6 +38,9 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
     max_steps = 10
     step = 0
     epsilon = 1
+
+    top_episodes = np.zeros((TOP_EPISODE_BUFFER, max_steps, action_dim), np.float32)
+    top_episode_rewards = np.zeros((TOP_EPISODE_BUFFER), np.float32)
 
     config = tf.ConfigProto()
     sess = tf.Session(config=config)
@@ -61,7 +65,7 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
         except:
             print("Cannot find the weight")
 
-    print("TORCS Experiment Start.")
+    print("Experiment Start.")
     for i in range(episode_count):
 
         print("Episode : " + str(i) + " Replay Buffer " + str(buff.count()))
@@ -69,6 +73,8 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
         ob = env.reset()
 
         s_t = ob
+
+        ep_buffer = np.zeros((max_steps, action_dim), np.float32)
 
         total_reward = 0.
         for j in range(max_steps):
@@ -79,12 +85,14 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
 
             a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0]))
 
-            for i in range(6):
-                noise_t[0][i] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][i], 0.0, 2.0, 1.0)
-                a_t[0][i] = a_t_original[0][i] + noise_t[0][i]
+            for k in range(6):
+                noise_t[0][k] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][k], 0.0, 2.0, 1.0)
+                a_t[0][k] = a_t_original[0][k] + noise_t[0][k]
 
             if render:
                 env.render()
+
+            ep_buffer[j] = a_t[0]
 
             actions = tuple(np.array([action]) for action in a_t[0].tolist())
 
@@ -129,8 +137,14 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
             if done:
                 break
 
+        lowest_top_reward = top_episode_rewards.min()
+        if total_reward > lowest_top_reward:
+            lowest_top_reward_idx = top_episode_rewards.argmin()
+            top_episodes[lowest_top_reward_idx] = ep_buffer
+            top_episode_rewards[lowest_top_reward_idx] = total_reward
+
         if np.mod(i, 3) == 0:
-            if (train_indicator):
+            if train_indicator == 1:
                 print("Now we save model")
                 actor.model.save_weights("models/actormodel.h5", overwrite=True)
                 with open("models/actormodel.json", "w") as outfile:
@@ -139,6 +153,9 @@ def playGame(train_indicator=1, render=True, debug=True):  # 1 means Train, 0 me
                 critic.model.save_weights("models/criticmodel.h5", overwrite=True)
                 with open("models/criticmodel.json", "w") as outfile:
                     json.dump(critic.model.to_json(), outfile)
+
+                np.savez("top-episodes/actions-{}-{}.npz".format(SETTING, RUN), top_episodes)
+                np.savez("top-episodes/rewards-{}-{}.npz".format(SETTING, RUN), top_episode_rewards)
 
         print("TOTAL REWARD @ " + str(i) + "-th Episode  : Reward " + str(total_reward))
         print("Total Step: " + str(step))
